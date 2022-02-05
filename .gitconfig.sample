@@ -1,0 +1,15 @@
+[push]
+default = simple
+[alias]
+lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+[credential]
+helper = /usr/bin/gp credential-helper
+[user]
+name = Daniel Maricic
+email = daniel@woss.io
+[gpg]
+program = /workspace/git-pgp-remote-sign/src/signer.js
+[tag]
+forceSignAnnotated = true
+[commit]
+gpgsign = true

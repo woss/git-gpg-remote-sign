@@ -1,0 +1,8 @@
+# Commands to start on workspace startup
+tasks:
+  - init: npm install
+    command: npm install
+# Ports to expose on workspace startup
+ports:
+  - port: 3000
+    visibility: public
