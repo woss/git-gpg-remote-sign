@@ -1,5 +1,3 @@
-Export this
+# Server and signer
 
-```bash
-export GPG_SIGN_KEY="-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nxjMEYf7gxhYJKwYBBAHaRw8BAQdALTqFVkIxiSu+IxkTjLY1wJnhXGkDo1RI\nNS5WFKHGdETNH0RhbmllbCBNYXJpY2ljIDxkYW5pZWxAd29zcy5pbz7CjAQQ\nFgoAHQUCYf7gxgQLCQcIAxUICgQWAAIBAhkBAhsDAh4BACEJEBL1X3Wx6w+k\nFiEENZXkseszY/t8T3jMEvVfdbHrD6SI1AEAhocMosRXD5YoqRYEaX2PqJ93\ngJ5ORwgYd1toP3S2NvQBAL8vjV7i0Ss4xeWiUTPls1JJNK6vbYXaZyhXR5t7\ngogJzjgEYf7gxhIKKwYBBAGXVQEFAQEHQM2XaI8hjlCcXIebxoQba7vQewgr\nzAiwrqlncLKlqr5DAwEIB8J4BBgWCAAJBQJh/uDGAhsMACEJEBL1X3Wx6w+k\nFiEENZXkseszY/t8T3jMEvVfdbHrD6TSRQEAvl+xh0Wyr6dL/Y+RXKec7UtN\nRlUHrXEGYr3EKZK2RSQA/AxJkxZFxzHLb3+1FFyN+frsRHxU6OzVQ0NVukXY\n2q4C\n=lWuz\n-----END PGP PUBLIC KEY BLOCK-----\n\n"
-```
+run the `pnpm watch` to get your build files, then run the server via `pnpm dev`

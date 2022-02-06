@@ -1,11 +1,20 @@
-FROM node:16-alpine
-
-EXPOSE 3000
+FROM node:16-bullseye as base
 
 WORKDIR /app
 
-COPY package.json src/server.js /app/
+COPY ./signer .
 
-RUN npm install --production
+RUN npm install -g pnpm
+
+RUN pnpm install
+RUN pnpm build
+
+FROM node:16-alpine as main
+
+WORKDIR /app
+
+COPY --from=base /app/dist .
+
+EXPOSE 3000
 
 CMD [ "node", "server.js" ]
