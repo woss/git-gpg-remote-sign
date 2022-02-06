@@ -1,8 +1,8 @@
 image:
   file: ./devops/.gitpod.Dockerfile
 tasks:
-  - init: npm install
-    command: npm install
+  - init: pnpm install
+    command: pnpm install
 # Ports to expose on workspace startup
 ports:
   - port: 3000
