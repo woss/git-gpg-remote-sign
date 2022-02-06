@@ -45,7 +45,7 @@ Now when you all that, change the gitconfig to match this:
 	# signingKey = 7A6DB9962EF3978E # this is my main key, only last 16 chars
 	signingKey = 3595E4B1EB3363FB7C4F78CC12F55F75B1EB0FA4 # this is my new full length testing key for p2p git signing
 [gpg]
-  program = ~/bin/remote-signer
+  program = remote-signer
 [tag]
   forceSignAnnotated = true
 [commit]

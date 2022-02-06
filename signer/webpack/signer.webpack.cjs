@@ -30,6 +30,7 @@ const config = {
   optimization: {
     minimize: false,
   },
+  // externals: ["node:fs", "node:zlib"],
   externalsPresets: {
     node: true,
   },
