@@ -24,9 +24,7 @@ Expose the port as you see fit, it must be `3000` internally.
 Modify this to suits your need:
 
 ```
-sudo sh -c '(echo "#!/usr/bin/env sh" \
-&& curl https://ipfs.anagolay.network/ipfs/QmeXQE6SteQB8LrVZp6YLbhuFcy1LUsFUfXGP3ZQ8NdCgg) > /usr/local/bin/remote-signer \
-&& chmod +x /usr/local/bin/remote-signer'
+sudo sh -c 'curl https://ipfs.anagolay.network/ipfs/QmVwR17T5oT4SsH1gb8T9L9gHe5CsJz2iwhbhWCwPPHgHR > /usr/local/bin/remote-signer && chmod +x /usr/local/bin/remote-signer'
 ```
 
 ### Change the gitconfig

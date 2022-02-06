@@ -85,6 +85,7 @@ async function sign(): Promise<void> {
 	const signingKey = findSigningKey();
 	// https://davesteele.github.io/gpg/2014/09/20/anatomy-of-a-gpg-key/
 	if (signingKey.length != 40) {
+		log.info('signingKey', signingKey);
 		log.error('We only support the full length key IDs');
 		throw new Error('We only support the full length key IDs');
 	}
