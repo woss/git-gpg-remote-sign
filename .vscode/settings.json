@@ -2,7 +2,11 @@
     "files.associations": {
         "signer": "javascript"
     },
+    "editor.formatOnSave": true,
     "workbench.sideBar.location": "right",
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
     "[dockerfile]": {
         "editor.defaultFormatter": "ms-azuretools.vscode-docker",
         "editor.quickSuggestions": {

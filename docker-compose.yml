@@ -1,11 +1,12 @@
 version: '3'
 services:
   server:
-    image: woss/remote-pgp-server
+    image: woss/remote-gpg-signing-service
     build: 
+      target: main
       context: .
-      dockerfile: Dockerfile
+      dockerfile: ./devops/prod.Dockerfile
     volumes:
       - ./keys:/keys
     ports:
-      - 3000:3000
+      - 31111:3000
