@@ -1,7 +1,7 @@
 version: '3'
 services:
   server:
-    image: woss/remote-pgp-server
+    image: woss/remote-gpg-signing-service
     build: 
       target: main
       context: .

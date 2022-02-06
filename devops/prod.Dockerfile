@@ -10,6 +10,6 @@ RUN pnpm build
 # main box
 FROM node:16-alpine as main
 WORKDIR /app
-COPY --from=base /app/dist .
+COPY --from=base /app/dist/server .
 EXPOSE 3000
 CMD [ "node", "server.js" ]

@@ -23,6 +23,7 @@ async function main() {
 	app.get('/', (req, res) => {
 		res.send('Hello Remote git GPG signing');
 	});
+
 	app.post<{
 		Body: {
 			signingKey: string;
@@ -106,4 +107,4 @@ async function readKeys() {
 	};
 }
 
-main().catch(console.error);
+main();

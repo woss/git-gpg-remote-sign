@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 import * as openpgp from 'openpgp';
 import { includes, indexOf } from 'ramda';
 import pino from 'pino';
-import { readFile, writeFile } from 'fs/promises';
+import { writeFile } from 'fs/promises';
 import { mkdirSync } from 'fs';
 
 const logsDir = `${process.env.HOME}/.logs/remote-signer`;
@@ -37,19 +37,23 @@ l1xEuO6oPz++pKII8JZROInUNPtpdivg5BgkYg0=
 ```
  */
 async function main() {
-	const { executionMode, path } = parseArguments();
-	switch (executionMode) {
-		case 'sign':
-			await sign();
-			break;
-		case 'verify':
-			await verify(path);
-			break;
+	try {
+		const { executionMode, path } = parseArguments();
+		switch (executionMode) {
+			case 'sign':
+				await sign();
+				break;
+			case 'verify':
+				await verify(path);
+				break;
 
-		default:
-			throw new Error('No default case');
+			default:
+				log.error('No default case');
+				throw new Error('No default case');
+		}
+	} catch (error) {
+		log.error(error);
 	}
-	return;
 }
 
 type PossibleOutcomes = 'sign' | 'verify';
@@ -81,6 +85,7 @@ async function sign(): Promise<void> {
 	const signingKey = findSigningKey();
 	// https://davesteele.github.io/gpg/2014/09/20/anatomy-of-a-gpg-key/
 	if (signingKey.length != 40) {
+		log.error('We only support the full length key IDs');
 		throw new Error('We only support the full length key IDs');
 	}
 
@@ -111,25 +116,27 @@ async function sign(): Promise<void> {
 			// hex encoding here makes a lot more sense than stringifying
 			msg: Buffer.from(encrypted).toString('hex'),
 		});
+		try {
+			// make a sign request
+			const response = await fetch(`${url}/sign`, {
+				method: 'POST',
+				body,
+				headers: { 'Content-Type': 'application/json' },
+			});
 
-		// make a sign request
-		const response = await fetch(`${url}/sign`, {
-			method: 'POST',
-			body,
-			headers: { 'Content-Type': 'application/json' },
-		});
+			const { signature } = (await response.json()) as { signature: string };
+			// logger.info(`[GNUPG:] KEY_CONSIDERED ${privateKey.getKeyID().toHex()} 0`)
+			// // process.stdout.write(`[GNUPG:] KEY_CONSIDERED ${privateKey.getKeyID().toHex()} 0`)
 
-		const { signature } = (await response.json()) as { signature: string };
-
-		// logger.info(`[GNUPG:] KEY_CONSIDERED ${privateKey.getKeyID().toHex()} 0`)
-		// // process.stdout.write(`[GNUPG:] KEY_CONSIDERED ${privateKey.getKeyID().toHex()} 0`)
-
-		// logger.info("[GNUPG:] BEGIN_SIGNING H10")
-		// // process.stdout.write("[GNUPG:] BEGIN_SIGNING H10")
-		// somehow this must be in the sterr so git can recognize it
-		process.stderr.write(`\n[GNUPG:] SIG_CREATED `);
-		// this must be written to the stdout so git can pick up the signature
-		process.stdout.write(signature);
+			// logger.info("[GNUPG:] BEGIN_SIGNING H10")
+			// // process.stdout.write("[GNUPG:] BEGIN_SIGNING H10")
+			// somehow this must be in the sterr so git can recognize it
+			process.stderr.write(`\n[GNUPG:] SIG_CREATED `);
+			// this must be written to the stdout so git can pick up the signature
+			process.stdout.write(signature);
+		} catch (error) {
+			log.error(error);
+		}
 	});
 }
 
@@ -185,6 +192,7 @@ function findSigningKey() {
 		// look for the Signing key in the args
 		const args = process.argv.slice(2);
 		if (args[0] !== '--status-fd=2' || args[1] !== '-bsau' || !args[2]) {
+			log.error('Arguments are bad!');
 			throw new Error('Arguments are bad!');
 		}
 		signingKey = args[2];
