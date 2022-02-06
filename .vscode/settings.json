@@ -2,6 +2,7 @@
     "files.associations": {
         "signer": "javascript"
     },
+    "editor.formatOnSave": true,
     "workbench.sideBar.location": "right",
     "[dockerfile]": {
         "editor.defaultFormatter": "ms-azuretools.vscode-docker",
