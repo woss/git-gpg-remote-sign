@@ -66,7 +66,7 @@ async function main() {
 	// Run the server!
 	const start = async () => {
 		try {
-			await app.listen(port);
+			await app.listen(port, '0.0.0.0');
 			console.log(`Example app listening on port ${port}`);
 		} catch (err) {
 			app.log.error(err);

@@ -3,9 +3,10 @@ services:
   server:
     image: woss/remote-pgp-server
     build: 
+      target: main
       context: .
       dockerfile: ./devops/prod.Dockerfile
     volumes:
       - ./keys:/keys
     ports:
-      - 3000:3000
+      - 31111:3000
