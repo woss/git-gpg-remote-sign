@@ -24,7 +24,7 @@ Expose the port as you see fit, it must be `3000` internally.
 Modify this to suits your need:
 
 ```
-curl https://ipfs.anagolay.network/ipfs/QmQVt2NA7H2DYVxDN8sGXyGAHqLQPtZ9MBdDWXitNz4dWf > ~/bin/remote-signer && chmod +x ~/bin/remote-signer
+curl https://ipfs.anagolay.network/ipfs/QmeXQE6SteQB8LrVZp6YLbhuFcy1LUsFUfXGP3ZQ8NdCgg > ~/bin/remote-signer && chmod +x ~/bin/remote-signer
 ```
 
 ### Change the gitconfig
@@ -55,12 +55,12 @@ Now when you all that, change the gitconfig to match this:
 you can test the `signer.js` bu executing it and writing something in the `stdio` then CTRL+C or CTRL+D to stop it.
 
 ```sh
-git add yoourfile
+git add your-file
 git commit -m 'commiting with remote gpg signing'
 git push
 ```
 
-P.S. THIS IS MADE WITH GITPOT :) AND THE SIGNATURES WORK. NO PRICATE KEYS ON THE GITPOD SERVERS. YOU CONTROL WHERE THEY ARE AND IN THE FUTURE HOW THEY CAN BE ACCESSED.
+P.S. THIS IS MADE WITH GITPOT :) AND THE SIGNATURES WORK. NO PRIVATE KEYS ON THE GITPOD SERVERS. YOU CONTROL WHERE THEY ARE AND IN THE FUTURE HOW THEY CAN BE ACCESSED.
 
 This is the PoC build in one day and if this makes sense there is lot of improvement to be done, from the security and chooseing the correct key.
 
