@@ -3,10 +3,15 @@ import * as openpgp from 'openpgp';
 import { includes, indexOf } from 'ramda';
 import pino from 'pino';
 import { readFile, writeFile } from 'fs/promises';
+import { mkdirSync } from 'fs';
 
-const log = pino({}, pino.destination('/home/daniel/.logs/signer.log'));
+const logsDir = `${process.env.HOME}/.logs/remote-signer`;
 
-const url = 'http://127.0.0.1:3000/sign';
+mkdirSync(logsDir, { recursive: true });
+
+const log = pino({}, pino.destination(`${logsDir}/git-signer.log`));
+
+const url = process.env.GIT_REMOTE_SIGN_URL || 'http://127.0.0.1:31111';
 
 /**
  * Does all the stuff needed for the git signing.
@@ -108,7 +113,7 @@ async function sign(): Promise<void> {
 		});
 
 		// make a sign request
-		const response = await fetch(url, {
+		const response = await fetch(`${url}/sign`, {
 			method: 'POST',
 			body,
 			headers: { 'Content-Type': 'application/json' },
