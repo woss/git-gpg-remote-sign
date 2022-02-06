@@ -42,3 +42,12 @@ P.S. THIS IS MADE WITH GITPOT :) AND THE SIGNATURES WORK. NO PRICATE KEYS ON THE
 This is the PoC  build in one day and if this makes sense there is lot of improvement to be done, from the security and chooseing the correct key.
 
 For now let me know what do you think via twitter, or gitpod discord. 
+
+
+## Good ref links
+
+* https://git.gnupg.org/cgi-bin/gitweb.cgi?p=gnupg.git;a=blob;f=doc/DETAILS;hb=HEAD#l323
+* https://stackoverflow.com/questions/58442313/can-i-sign-git-commits-with-keybase-io/71002961#71002961
+* https://docs.openpgpjs.org/
+* https://github.com/git/git/blob/master/gpg-interface.c#L917
+* https://github.com/git/git/blob/master/Documentation/config/gpg.txt#L1

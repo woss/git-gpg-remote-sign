@@ -1,4 +1,5 @@
-# Commands to start on workspace startup
+image:
+  file: ./devops/.gitpod.Dockerfile
 tasks:
   - init: npm install
     command: npm install
@@ -6,3 +7,6 @@ tasks:
 ports:
   - port: 3000
     visibility: public
+vscode:
+  extensions:
+    - PKief.material-icon-theme
