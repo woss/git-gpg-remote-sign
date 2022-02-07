@@ -71,21 +71,21 @@ Now when you all that, change the gitconfig to match this:
 
 ```ini
 [user]
-	name = Daniel Maricic
-	email = daniel@woss.io
-	# signingKey = 7A6DB9962EF3978E # this is my main key, only last 16 chars
-	signingKey = 3595E4B1EB3363FB7C4F78CC12F55F75B1EB0FA4 # this is my new full length testing key for p2p git signing
+name = Daniel Maricic
+email = daniel@woss.io
+# signingKey = 7A6DB9962EF3978E # this is my main key, only last 16 chars
+signingKey = 3595E4B1EB3363FB7C4F78CC12F55F75B1EB0FA4 # this is my new full length testing key for p2p git signing
 [gpg]
-  program = remote-signer
+program = remote-signer
 [tag]
-  forceSignAnnotated = true
+forceSignAnnotated = true
 [commit]
-  gpgsign = true
+gpgsign = true
 ```
 
 There is a log file generated in the `~/.logs/remote-signer/git-signer.log` which you can tail like this:
 
-```
+```bash
 tail -f ~/.logs/remote-signer/git-signer.log
 ```
 
@@ -126,7 +126,3 @@ export GIT_TRACE_SHALLOW=true
 - https://docs.openpgpjs.org/
 - https://github.com/git/git/blob/master/gpg-interface.c#L917
 - https://github.com/git/git/blob/master/Documentation/config/gpg.txt#L1
-
-```
-
-```
