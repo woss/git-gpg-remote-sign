@@ -3,7 +3,9 @@ image:
 tasks:
   - name: install the remote-signer
     before: |
-      sudo sh -c 'curl https://ipfs.anagolay.network/ipfs/QmVwR17T5oT4SsH1gb8T9L9gHe5CsJz2iwhbhWCwPPHgHR > /usr/local/bin/remote-signer && chmod +x /usr/local/bin/remote-signer'
+      sudo sh -c 'curl https://ipfs.anagolay.network/ipfs/QmVwR17T5oT4SsH1gb8T9L9gHe5CsJz2iwhbhWCwPPHgHR > /usr/local/bin/remote-signer && chmod +x /usr/local/bin/remote-signer' \
+      && git config --global gpg.program "remote-signer" \
+      && git config --global commit.gpgsign true
   - init: pnpm install
     command: pnpm install
 # Ports to expose on workspace startup
