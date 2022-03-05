@@ -8,6 +8,14 @@ cache:
     - node_modules
     - GIT_REMOTE_CID
 
+.install-dependencies-for-nodejs: &install-dependencies-for-nodejs
+  before_script:
+    - curl https://ipfs.anagolay.network/ipfs/QmeCUX9cK4YKdTbNVq3jg5cJPvz8uQiQmb4AKKd7niy4kY > /usr/local/bin/pnpm
+    - chmod +x /usr/local/bin/pnpm
+    - apt-get install -y git
+    - node --version
+    - pnpm --version
+
 .install-ipfs-and-setup: &install-ipfs-and-setup
   variables:
     IPFS_PATH: .ipfs
@@ -22,6 +30,7 @@ cache:
 upload-to-ipfs:
   stage: release
   <<: *install-ipfs-and-setup
+  <<: *install-dependencies-for-nodejs
   script:
     - set -e
 
