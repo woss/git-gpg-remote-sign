@@ -13,7 +13,7 @@ const config = {
 		// libraryTarget: 'umd',
 		path: path.resolve(__dirname, '../dist/signer'),
 		// filename: '[name].js',
-		clean: true,
+		// clean: true,
 	},
 	plugins: [
 		new webpack.BannerPlugin({

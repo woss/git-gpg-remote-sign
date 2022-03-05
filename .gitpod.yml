@@ -8,6 +8,7 @@ tasks:
       && git config --global commit.gpgsign true
   - init: pnpm install
     command: pnpm install
+  - command: bash devops/install-deps.sh
 # Ports to expose on workspace startup
 ports:
   - port: 3000

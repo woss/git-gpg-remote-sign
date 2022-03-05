@@ -52,16 +52,21 @@ async function main() {
 			decryptionKeys: privateKey,
 		});
 
-		console.log('signatures', signatures);
-
 		const message = await openpgp.createMessage({ text: decrypted });
 		const detachedSignature = await openpgp.sign({
 			message,
 			signingKeys: privateKey,
 			detached: true,
 		});
-
-		res.send({ signature: detachedSignature });
+		const hexSignature = Buffer.from(detachedSignature.toString()).toString(
+			'hex'
+		);
+		console.log(hexSignature);
+		console.log(detachedSignature.toString());
+		res.send({
+			hexSignature,
+			detatchedSignature: detachedSignature.toString(),
+		});
 	});
 
 	// Run the server!
