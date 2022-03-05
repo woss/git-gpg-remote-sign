@@ -8,18 +8,15 @@ cache:
     - node_modules
     - GIT_REMOTE_CID
 
-.install-dependencies-for-nodejs: &install-dependencies-for-nodejs
+.install-ipfs-and-setup-extra-stuff: &install-ipfs-and-setup-extra-stuff
+  variables:
+    IPFS_PATH: .ipfs
   before_script:
     - curl https://ipfs.anagolay.network/ipfs/QmeCUX9cK4YKdTbNVq3jg5cJPvz8uQiQmb4AKKd7niy4kY > /usr/local/bin/pnpm
     - chmod +x /usr/local/bin/pnpm
     - apt-get install -y git
     - node --version
     - pnpm --version
-
-.install-ipfs-and-setup: &install-ipfs-and-setup
-  variables:
-    IPFS_PATH: .ipfs
-  before_script:
     - echo "Downloading the go-ipfs binary v0.12.0 from our IPFS node"
     - |
       curl https://ipfs.anagolay.network/ipfs/bafybeih63m5xkkskklntu3ufd6kyjgkvqot4bcre3evquindven7i6yxse > /usr/local/bin/ipfs
@@ -29,8 +26,7 @@ cache:
 
 upload-to-ipfs:
   stage: release
-  <<: *install-ipfs-and-setup
-  <<: *install-dependencies-for-nodejs
+  <<: *install-ipfs-and-setup-extra-stuff
   script:
     - set -e
 
