@@ -14,9 +14,9 @@ async function main() {
 			prettyPrint:
 				process.env.NODE_ENV === 'development'
 					? {
-							translateTime: 'HH:MM:ss Z',
-							ignore: 'pid,hostname',
-					  }
+						translateTime: 'HH:MM:ss Z',
+						ignore: 'pid,hostname',
+					}
 					: false,
 		},
 	});

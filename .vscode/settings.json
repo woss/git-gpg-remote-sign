@@ -1,10 +1,28 @@
 {
-    "files.associations": {
-        "signer": "javascript"
+    "editor.codeActionsOnSave": {
+        "source.fixAll": true
     },
+    "eslint.format.enable": true,
+    "editor.wordWrap": "bounded",
+    "editor.wordWrapColumn": 110,
+    "editor.rulers": [
+        110
+    ],
     "editor.formatOnSave": true,
-    "workbench.sideBar.location": "right",
+    "editor.formatOnPaste": false,
+    "[json]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
     "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[markdown]": {
+        "editor.wordWrap": "wordWrapColumn",
+        "editor.wordWrapColumn": 110,
+        "editor.quickSuggestions": true,
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "[dockerfile]": {
@@ -12,5 +30,26 @@
         "editor.quickSuggestions": {
             "strings": true
         }
-    }
+    },
+    "javascript.validate.enable": false,
+    "files.associations": {
+        "*.json": "jsonc",
+        "*.cjs": "javascript",
+        "signer": "javascript"
+    },
+    "npm.packageManager": "pnpm",
+    "cSpell.words": [
+        "anagolay",
+        "bafy",
+        "destructure",
+        "grayscale",
+        "multihashes",
+        "pnpm",
+        "pnpx",
+        "rehosted",
+        "subsampling"
+    ],
+    "workbench.sideBar.location": "right",
+    "terminal.integrated.letterSpacing": 1,
+    "editor.tabSize": 2
 }

@@ -1,15 +1,20 @@
 import fetch from 'node-fetch';
 import * as openpgp from 'openpgp';
-import { includes, indexOf } from 'ramda';
+import { includes, indexOf, isEmpty, split, startsWith, trim } from 'ramda';
 import pino from 'pino';
-import { writeFile } from 'fs/promises';
-import { mkdirSync } from 'fs';
+import { access, readFile, stat, writeFile } from 'node:fs/promises';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 
 const logsDir = `${process.env.HOME}/.logs/remote-signer`;
 
 mkdirSync(logsDir, { recursive: true });
 
-const log = pino({}, pino.destination(`${logsDir}/git-signer.log`));
+const log = pino(
+	{
+		level: 'trace',
+	},
+	pino.destination(`${logsDir}/git-signer.log`)
+);
 
 const url = process.env.GIT_REMOTE_SIGN_URL || 'http://127.0.0.1:31111';
 
@@ -37,8 +42,12 @@ l1xEuO6oPz++pKII8JZROInUNPtpdivg5BgkYg0=
 ```
  */
 async function main() {
+	log.info('Request started');
 	try {
+		await checkSupportedNodejsVersion();
+
 		const { executionMode, path } = parseArguments();
+
 		switch (executionMode) {
 			case 'sign':
 				await sign();
@@ -46,65 +55,102 @@ async function main() {
 			case 'verify':
 				await verify(path);
 				break;
-
 			default:
-				log.error('No default case');
 				throw new Error('No default case');
 		}
 	} catch (error) {
+		if (process.env.IS_DEV === '1' || process.env.IS_DEV === 'true') {
+			console.log(error);
+		}
+		// we need to swallow the errors since the git doesn't like to see them
 		log.error(error);
 	}
 }
-
+/**
+ * Check do we run on the minimum required nodejs version. If we do, continue, if we do not throw Error
+ * @param minVersion number - defaults to 16
+ */
+async function checkSupportedNodejsVersion(minVersion: number = 16) {
+	log.info('Checking the nodejs version ...');
+	const { node } = process.versions;
+	const [runtimeNodeVersionAsString] = split('.')(trim(node));
+	const currentNodeVersion = parseInt(runtimeNodeVersionAsString, 10);
+	if (currentNodeVersion < minVersion) {
+		throw new Error(
+			`NODEJS runtime version is too low ${node}, needed ${minVersion}`
+		);
+	}
+	log.info(`    Nodejs : ${currentNodeVersion}>=${minVersion}`);
+}
+/**
+ * Git gpg possible outcomes for calling this script
+ */
 type PossibleOutcomes = 'sign' | 'verify';
 /**
  * Parse the arguments and returns the outcome, sign or verify
  */
 function parseArguments(): { executionMode: PossibleOutcomes; path: string } {
+	log.trace('Parsing arguments ...');
+
 	// we don't need first 2 items
 	const args = process.argv.slice(2);
-
-	// Signing signer.js --status-fd=2 -bsau 3595E4B1EB3363FB7C4F78CC12F55F75B1EB0FA4
-	if (includes('--status-fd=2', args) && includes('-bsau', args)) {
-		log.trace(`Got the command to sign ${process.argv.join(' ')}`);
-		return { executionMode: 'sign', path: '' };
-	}
-	// Verification ./signer.js --keyid-format=long --status-fd=1 --verify /tmp/.git_vtag_tmpxmPdqZ -
-	else if (
-		includes('--keyid-format=long', args) &&
-		includes('--status-fd=1', args) &&
-		includes('--verify', args)
-	) {
-		log.trace(`Got the command to verify ${process.argv.join(' ')}`);
-		const idxOfVerify = indexOf('--verify', args);
-		return { executionMode: 'verify', path: args[idxOfVerify + 1] };
+	if (isEmpty(args)) {
+		throw new Error('Signer script called without arguments');
+	} else {
+		// Signing signer.js --status-fd=2 -bsau 3595E4B1EB3363FB7C4F78CC12F55F75B1EB0FA4
+		if (includes('--status-fd=2', args) && includes('-bsau', args)) {
+			log.trace(`    Got the command to sign ${process.argv.join(' ')}`);
+			return { executionMode: 'sign', path: '' };
+		}
+		// Verification ./signer.js --keyid-format=long --status-fd=1 --verify /tmp/.git_vtag_tmpxmPdqZ -
+		else if (
+			includes('--keyid-format=long', args) &&
+			includes('--status-fd=1', args) &&
+			includes('--verify', args)
+		) {
+			log.trace(`    Got the command to verify ${process.argv.join(' ')}`);
+			const idxOfVerify = indexOf('--verify', args);
+			return { executionMode: 'verify', path: args[idxOfVerify + 1] };
+		} else {
+			log.error(
+				`    Got else arm. that should not happen, here are args ${args}`
+			);
+		}
 	}
 }
 
 async function sign(): Promise<void> {
+	log.info('Executing script in sign mode');
 	const signingKey = findSigningKey();
 	// https://davesteele.github.io/gpg/2014/09/20/anatomy-of-a-gpg-key/
 	if (signingKey.length != 40) {
-		log.info('signingKey', signingKey);
+		log.info(`signingKey ${signingKey}`);
 		log.error('We only support the full length key IDs');
 		throw new Error('We only support the full length key IDs');
 	}
+	const cachedKeyPath = `${process.env.HOME}/.config/${signingKey}.asc`;
+	let publicKeyArmored: string = '';
 
-	const publicKeyArmored = await (
-		await fetch(
-			`https://keys.openpgp.org/vks/v1/by-fingerprint/${signingKey}`,
-			{ method: 'GET' }
-		)
-	).text();
-
-	await writeFile(
-		`${process.env.HOME}/.config/${signingKey}.asc`,
-		publicKeyArmored
-	);
+	if (existsSync(cachedKeyPath)) {
+		log.trace(`Found cached Armored key here ${cachedKeyPath}, using that`);
+		publicKeyArmored = (await readFile(cachedKeyPath)).toString();
+	} else {
+		publicKeyArmored = await (
+			await fetch(
+				`https://keys.openpgp.org/vks/v1/by-fingerprint/${signingKey}`,
+				{ method: 'GET' }
+			)
+		).text();
+		await writeFile(cachedKeyPath, publicKeyArmored);
+		log.trace(
+			`Got Public key armored from the openpgp.org. Storing it here ${cachedKeyPath}`
+		);
+	}
 
 	const publicKey = await openpgp.readKey({ armoredKey: publicKeyArmored });
 
 	process.stdin.on('data', async (data) => {
+		log.trace(`Inside the stdin, accepting data "${data}"`);
 		// encrypt the message with the public key
 		const encrypted = await openpgp.encrypt({
 			message: await openpgp.createMessage({ binary: data }), // input as Message object
@@ -112,6 +158,7 @@ async function sign(): Promise<void> {
 			format: 'binary',
 		});
 
+		log.trace('Commit Message is encrypted, sending to the server ...');
 		const body = JSON.stringify({
 			signingKey,
 			// hex encoding here makes a lot more sense than stringifying
@@ -126,6 +173,7 @@ async function sign(): Promise<void> {
 			});
 
 			const { signature } = (await response.json()) as { signature: string };
+			log.trace(`Got the signature back from the server ${signature}`);
 			// logger.info(`[GNUPG:] KEY_CONSIDERED ${privateKey.getKeyID().toHex()} 0`)
 			// // process.stdout.write(`[GNUPG:] KEY_CONSIDERED ${privateKey.getKeyID().toHex()} 0`)
 
@@ -146,6 +194,8 @@ async function sign(): Promise<void> {
  * @param signaturePath
  */
 async function verify(signaturePath: string) {
+	log.info(`Executing script in verify mode with  sigPath ${signaturePath}`);
+
 	// process.stdin.on('data', async (messageBuff) => {
 	// try {
 	// const message = await openpgp.createMessage({
@@ -184,10 +234,12 @@ async function verify(signaturePath: string) {
  * Search the GPG_SIGN_KEY var for the signing key or the last arg which is passed by the git
  */
 function findSigningKey() {
+	log.info('Finding signing key ...');
 	let signingKey = '';
 
 	// look for the signing key in the env first
 	if (process.env.GPG_SIGN_KEY) {
+		log.info('    Key found in GPG_SIGN_KEY env variable');
 		signingKey = process.env.GPG_SIGN_KEY;
 	} else {
 		// look for the Signing key in the args
@@ -196,6 +248,7 @@ function findSigningKey() {
 			log.error('Arguments are bad!');
 			throw new Error('Arguments are bad!');
 		}
+		log.info('    Key found in arguments arg[2]');
 		signingKey = args[2];
 	}
 	return signingKey;
