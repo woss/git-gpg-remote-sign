@@ -1,0 +1,33 @@
+image: node:16-bullseye
+stages:
+  - test
+  - release
+cache:
+  key: $CI_COMMIT_REF_SLUG
+  paths:
+    - node_modules
+    - GIT_REMOTE_CID
+
+.install-ipfs-and-setup: &install-ipfs-and-setup
+  variables:
+    IPFS_PATH: .ipfs
+  before_script:
+    - echo "Downloading the go-ipfs binary v0.12.0 from our IPFS node"
+    - |
+      curl https://ipfs.anagolay.network/ipfs/bafybeih63m5xkkskklntu3ufd6kyjgkvqot4bcre3evquindven7i6yxse > /usr/local/bin/ipfs
+      chmod +x /usr/local/bin/ipfs
+      mkdir $IPFS_PATH
+      echo "/ip4/${ANAGOLAY_MAIN_IPFS_IP}/tcp/${ANAGOLAY_MAIN_IPFS_PORT}" > $IPFS_PATH/api
+
+upload-to-ipfs:
+  stage: release
+  <<: *install-ipfs-and-setup
+  script:
+    - set -e
+
+    - echo 'Building the signer'
+    - cd signer && pnpm build:signer
+
+    - echo "Uploading to IPFS ..."
+    - ipfs add --cid-version=1 --pin=true --recursive --quieter dist/signer/signer.js > GIT_REMOTE_CID
+    - echo "The remote-signer is published with the CID:" && cat GIT_REMOTE_CID
