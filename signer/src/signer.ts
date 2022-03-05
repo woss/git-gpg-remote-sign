@@ -1,29 +1,5 @@
-import fetch from 'node-fetch';
-import * as openpgp from 'openpgp';
-import { includes, indexOf, isEmpty, split, startsWith, trim } from 'ramda';
-import pino from 'pino';
-import { access, readFile, stat, writeFile } from 'node:fs/promises';
-import { existsSync, mkdirSync, readFileSync } from 'node:fs';
-
-const logsDir = `${process.env.HOME}/.logs/remote-signer`;
-
-mkdirSync(logsDir, { recursive: true });
-
-const log = pino(
-	{
-		level: 'trace',
-	},
-	pino.destination(`${logsDir}/git-signer.log`)
-);
-
-const url = process.env.GIT_REMOTE_SIGN_URL || 'http://127.0.0.1:31111';
-
 /**
- * Does all the stuff needed for the git signing.
- * The commit message will be encrypted and hex encoded before sending over the wire. The server is to decode and then decrypt the message, then sign it and return the sig
- * 
- * 
- * 
+  * 
  * NOTE: NEVER HAVE ANYTHING THAN THE SIGNATURE RELATED STUFF WRITING THE stdout, GIT WILL PICK IT UP AND ADD AS A SIGNATURE (pretty stupid)
  * 
  * I had the `console.log` while commiting. this happened
@@ -41,12 +17,39 @@ l1xEuO6oPz++pKII8JZROInUNPtpdivg5BgkYg0=
 '
 ```
  */
+import fetch from 'node-fetch';
+import * as openpgp from 'openpgp';
+import { includes, indexOf, isEmpty, split, startsWith, trim } from 'ramda';
+import pino from 'pino';
+import { access, readFile, stat, writeFile } from 'node:fs/promises';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
+
+const logsDir = `${process.env.HOME}/.logs/remote-signer`;
+const cacheDir = `${process.env.HOME}/.cache/remote-signer`;
+
+mkdirSync(logsDir, { recursive: true });
+mkdirSync(cacheDir, { recursive: true });
+
+const log = pino(
+	{
+		level: 'trace',
+	},
+	pino.destination(`${logsDir}/git-signer.log`)
+);
+
+const url = process.env.GIT_REMOTE_SIGN_URL || 'http://127.0.0.1:3000';
+
+/**
+ * Git gpg possible outcomes for calling this script
+ */
+type PossibleOutcomes = 'sign' | 'verify';
+
 async function main() {
-	log.info('Request started');
+	log.trace('Request started');
 	try {
 		await checkSupportedNodejsVersion();
 
-		const { executionMode, path } = parseArguments();
+		const { executionMode, path } = await parseArguments();
 
 		switch (executionMode) {
 			case 'sign':
@@ -70,8 +73,10 @@ async function main() {
  * Check do we run on the minimum required nodejs version. If we do, continue, if we do not throw Error
  * @param minVersion number - defaults to 16
  */
-async function checkSupportedNodejsVersion(minVersion: number = 16) {
-	log.info('Checking the nodejs version ...');
+async function checkSupportedNodejsVersion(
+	minVersion: number = 16
+): Promise<void> {
+	log.trace('Checking the nodejs version ...');
 	const { node } = process.versions;
 	const [runtimeNodeVersionAsString] = split('.')(trim(node));
 	const currentNodeVersion = parseInt(runtimeNodeVersionAsString, 10);
@@ -80,16 +85,16 @@ async function checkSupportedNodejsVersion(minVersion: number = 16) {
 			`NODEJS runtime version is too low ${node}, needed ${minVersion}`
 		);
 	}
-	log.info(`    Nodejs : ${currentNodeVersion}>=${minVersion}`);
+	log.trace(`    Nodejs : ${currentNodeVersion}>=${minVersion}`);
 }
-/**
- * Git gpg possible outcomes for calling this script
- */
-type PossibleOutcomes = 'sign' | 'verify';
+
 /**
  * Parse the arguments and returns the outcome, sign or verify
  */
-function parseArguments(): { executionMode: PossibleOutcomes; path: string } {
+async function parseArguments(): Promise<{
+	executionMode: PossibleOutcomes;
+	path: string;
+}> {
 	log.trace('Parsing arguments ...');
 
 	// we don't need first 2 items
@@ -119,20 +124,19 @@ function parseArguments(): { executionMode: PossibleOutcomes; path: string } {
 	}
 }
 
-async function sign(): Promise<void> {
-	log.info('Executing script in sign mode');
-	const signingKey = findSigningKey();
-	// https://davesteele.github.io/gpg/2014/09/20/anatomy-of-a-gpg-key/
-	if (signingKey.length != 40) {
-		log.info(`signingKey ${signingKey}`);
-		log.error('We only support the full length key IDs');
-		throw new Error('We only support the full length key IDs');
-	}
-	const cachedKeyPath = `${process.env.HOME}/.config/${signingKey}.asc`;
+/**
+ * Return the armored pub key. If fingerprint is passed via param we will return from the local cache or from the openpgp.org.
+ * @param signingKey string - We get this either via the arg or env var
+ * @returns
+ */
+async function giveMeArmoredPublicKey(
+	signingKey: string
+): Promise<openpgp.Key> {
+	const cachedKeyPath = `${cacheDir}/${signingKey}.asc`;
 	let publicKeyArmored: string = '';
 
 	if (existsSync(cachedKeyPath)) {
-		log.trace(`Found cached Armored key here ${cachedKeyPath}, using that`);
+		log.trace(`Found cached key here ${cachedKeyPath}, using that`);
 		publicKeyArmored = (await readFile(cachedKeyPath)).toString();
 	} else {
 		publicKeyArmored = await (
@@ -148,9 +152,25 @@ async function sign(): Promise<void> {
 	}
 
 	const publicKey = await openpgp.readKey({ armoredKey: publicKeyArmored });
+	return publicKey;
+}
+
+/**
+ * This method is called every time when there is incoming signed commit
+ */
+async function sign(): Promise<void> {
+	log.trace('Executing script in sign mode');
+	const signingKey = findSigningKey();
+	// https://davesteele.github.io/gpg/2014/09/20/anatomy-of-a-gpg-key/
+	if (signingKey.length != 40) {
+		log.trace(`signingKey ${signingKey}`);
+		log.error('We only support the full length key IDs');
+		throw new Error('We only support the full length key IDs');
+	}
+	const publicKey = await giveMeArmoredPublicKey(signingKey);
 
 	process.stdin.on('data', async (data) => {
-		log.trace(`Inside the stdin, accepting data "${data}"`);
+		log.trace(`    Inside the stdin, accepting data "${data}"`);
 		// encrypt the message with the public key
 		const encrypted = await openpgp.encrypt({
 			message: await openpgp.createMessage({ binary: data }), // input as Message object
@@ -172,16 +192,22 @@ async function sign(): Promise<void> {
 				headers: { 'Content-Type': 'application/json' },
 			});
 
-			const { signature } = (await response.json()) as { signature: string };
-			log.trace(`Got the signature back from the server ${signature}`);
-			// logger.info(`[GNUPG:] KEY_CONSIDERED ${privateKey.getKeyID().toHex()} 0`)
+			const { hexSignature } = (await response.json()) as {
+				hexSignature: string; // hex encoded detatchedSignature
+				detatchedSignature: string; // raw detatchedSignature
+			};
+			// logger.trace(`[GNUPG:] KEY_CONSIDERED ${privateKey.getKeyID().toHex()} 0`)
 			// // process.stdout.write(`[GNUPG:] KEY_CONSIDERED ${privateKey.getKeyID().toHex()} 0`)
 
-			// logger.info("[GNUPG:] BEGIN_SIGNING H10")
-			// // process.stdout.write("[GNUPG:] BEGIN_SIGNING H10")
+			const signature = Buffer.from(hexSignature, 'hex').toString();
+
+			// log.trace('[GNUPG:] BEGIN_SIGNING H10');
+			// process.stdout.write('[GNUPG:] BEGIN_SIGNING H10');
 			// somehow this must be in the sterr so git can recognize it
 			process.stderr.write(`\n[GNUPG:] SIG_CREATED `);
 			// this must be written to the stdout so git can pick up the signature
+
+			log.info(`Signature created 0x%s`, hexSignature);
 			process.stdout.write(signature);
 		} catch (error) {
 			log.error(error);
@@ -190,56 +216,58 @@ async function sign(): Promise<void> {
 }
 
 /**
- * Git invokes the gpg --verify on the `git log --shot-signatures` and this is what gets executed in our script
- * @param signaturePath
+ * Main verify method for thig gpg implementation. this will always be triggered for any git cmd that verifies GPG commit sigs
+ * @param signaturePath string - Passed by the git, a temp file `/tmp/.git_vtag_tmpgz2nkg`
  */
 async function verify(signaturePath: string) {
-	log.info(`Executing script in verify mode with  sigPath ${signaturePath}`);
+	log.trace(`Executing script in verify mode with sigPath ${signaturePath}`);
+	const signingKey = findSigningKey();
 
-	// process.stdin.on('data', async (messageBuff) => {
-	// try {
-	// const message = await openpgp.createMessage({
-	// 	text: messageBuff.toString(),
-	// });
-	// const signatureAsBuf = await readFile(signaturePath);
-	// log.info(signatureAsBuf.toString());
-	// log.info(new TextEncoder().encode(signatureAsBuf.toString()));
-	// const signature = await openpgp.readSignature({
-	// 	binarySignature: signatureAsBuf,
-	// });
-	// log.info(signature);
-	// const publicKeyArmored = await (
-	// 	await fetch(
-	// 		`https://keys.openpgp.org/vks/v1/by-fingerprint/${signingKey}`,
-	// 		{ method: 'GET' }
-	// 	)
-	// ).text();
-	// const publicKey = await openpgp.readKey({ armoredKey: publicKeyArmored });
-	// const verificationResult = await openpgp.verify({
-	// 	message, // Message object
-	// 	signature,
-	// 	verificationKeys: publicKey,
-	// });
-	// const { verified, keyID } = verificationResult.signatures[0];
-	// log.info(verificationResult);
-	// cheat for now, until you figure out how to format the signture that contains the \n  to armored
-	// } catch (error) {
-	// 	log.error(error);
-	// }
-	// });
-	process.stdout.write(`\n[GNUPG:] GOODSIG `);
+	process.stdin.on('data', async (messageBuff) => {
+		const acceptedMessage = messageBuff.toString();
+		log.trace(`    In stdin,  accepting message ${acceptedMessage}`);
+
+		try {
+			const signatureAsBuf = await readFile(signaturePath);
+			// this is how to fix the stupid \n\n from the temp file.
+			// that in the last string literal is the pressed ENTER key , i kid you not, it muxt be like that
+			const armoredSignature = `${signatureAsBuf.toString().split('\n').join(`
+`)}`;
+
+			const signature = await openpgp.readSignature({
+				armoredSignature,
+			});
+			const publicKey = await giveMeArmoredPublicKey(signingKey);
+
+			const message = await openpgp.createMessage({
+				text: acceptedMessage,
+			});
+
+			await openpgp.verify({
+				message,
+				signature,
+				verificationKeys: publicKey,
+			});
+
+			log.trace('Signature verified.');
+
+			process.stdout.write(`\n[GNUPG:] GOODSIG `);
+		} catch (error) {
+			log.error(error);
+		}
+	});
 }
 
 /**
  * Search the GPG_SIGN_KEY var for the signing key or the last arg which is passed by the git
  */
 function findSigningKey() {
-	log.info('Finding signing key ...');
+	log.trace('Finding signing key ...');
 	let signingKey = '';
 
 	// look for the signing key in the env first
 	if (process.env.GPG_SIGN_KEY) {
-		log.info('    Key found in GPG_SIGN_KEY env variable');
+		log.trace('    Key found in GPG_SIGN_KEY env variable');
 		signingKey = process.env.GPG_SIGN_KEY;
 	} else {
 		// look for the Signing key in the args
@@ -248,7 +276,7 @@ function findSigningKey() {
 			log.error('Arguments are bad!');
 			throw new Error('Arguments are bad!');
 		}
-		log.info('    Key found in arguments arg[2]');
+		log.trace('    Key found in arguments arg[2]');
 		signingKey = args[2];
 	}
 	return signingKey;
