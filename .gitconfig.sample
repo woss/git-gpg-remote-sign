@@ -8,7 +8,7 @@ helper = /usr/bin/gp credential-helper
 name = Daniel Maricic
 email = daniel@woss.io
 [gpg]
-program = remote-signer
+program = remote_signer
 [tag]
 forceSignAnnotated = true
 [commit]

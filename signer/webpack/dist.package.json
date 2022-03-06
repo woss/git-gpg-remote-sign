@@ -1,9 +1,0 @@
-{
-	"name": "dist",
-	"version": "1.0.0",
-	"description": "",
-	"main": "signer.js",
-	"keywords": [],
-	"author": "",
-	"license": "ISC"
-}
