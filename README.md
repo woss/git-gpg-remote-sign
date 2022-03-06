@@ -28,7 +28,7 @@ Following is the `docker-compose.yml` file which will spin the signing repo. You
 version: "3"
 services:
   server:
-    image: woss/remote-gpg-signing-service
+    image: woss/remote-signer-server
     volumes:
       - ./keys:/keys
     ports:

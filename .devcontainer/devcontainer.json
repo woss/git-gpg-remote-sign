@@ -1,0 +1,48 @@
+{
+	"name": "Git remote signer",
+	"dockerComposeFile": "../devops/devcontainer-compose.yml",
+	"service": "code",
+	"workspaceFolder": "/workspace",
+	"settings": {
+		"terminal.integrated.profiles.linux": {
+			"zsh": {
+				"path": "/usr/bin/zsh"
+			}
+		},
+		"terminal.integrated.defaultProfile.linux": "zsh"
+	},
+	"extensions": [
+		"PKief.material-icon-theme",
+		"esbenp.prettier-vscode",
+		"dbaeumer.vscode-eslint",
+		"foxundermoon.shell-format",
+		"streetsidesoftware.code-spell-checker",
+		"mhutchie.git-graph",
+		"PKief.material-icon-theme",
+		"ms-azuretools.vscode-docker",
+		"eg2.vscode-npm-script",
+		"pflannery.vscode-versionlens",
+		"yzhang.markdown-all-in-one",
+		"eriklynd.json-tools",
+		"oliversturm.fix-json",
+		"GitLab.gitlab-workflow"
+	],
+	"overrideCommand": false,
+	"features": {
+		"docker-in-docker": {
+			"version": "latest",
+			"moby": true
+		},
+		// "rust": {
+		// 	"version": "latest",
+		// 	"profile": "default"
+		// },
+		// "git-lfs": "latest",
+		// "node": {
+		// 	"version": "16",
+		// 	"nodeGypDependencies": true
+		// }
+	},
+	"remoteUser": "node",
+	"postCreateCommand": "bash devops/install-deps.sh"
+}

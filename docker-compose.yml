@@ -1,8 +1,8 @@
 version: '3'
 services:
   server:
-    image: woss/remote-gpg-signing-service
-    build: 
+    image: woss/remote-signer-server:latest
+    build:
       target: main
       context: .
       dockerfile: ./devops/prod.Dockerfile
