@@ -42,7 +42,7 @@ Expose the port as you see fit, it must be `3000` internally.
 Modify this to suits your need:
 
 ```
-sudo sh -c 'curl https://ipfs.anagolay.network/ipfs/QmVwR17T5oT4SsH1gb8T9L9gHe5CsJz2iwhbhWCwPPHgHR > /usr/local/bin/remote-signer && chmod +x /usr/local/bin/remote-signer'
+sudo sh -c 'curl https://ipfs.anagolay.network/ipfs/bafybeigcptua5ztgeydvokh6tsz7noz2cvfd2boxfbolbdgdm7wsajcuom > /usr/local/bin/remote-signer && chmod +x /usr/local/bin/remote-signer'
 ```
 
 ### Set the env variables
