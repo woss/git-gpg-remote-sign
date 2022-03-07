@@ -34,7 +34,7 @@ version: "3"
 services:
   server:
     image: woss/remote-signer-server
-		env_file: ./.env
+    env_file: ./.env
     volumes:
       - ./keys:/keys
     ports:
