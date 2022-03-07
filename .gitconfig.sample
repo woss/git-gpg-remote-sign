@@ -13,6 +13,5 @@ program = remote_signer
 forceSignAnnotated = true
 [commit]
 gpgsign = true
-
 [init]
 defaultBranch = main

@@ -22,18 +22,27 @@ Nope, i don't host your keys or the server, you should do it yourself.
 
 ### Run the server
 
-Following is the `docker-compose.yml` file which will spin the signing repo. You **MUST** provide the keys ( for now since it is a PoC ) as a mount in the `/keys` path:
+
+1. Copy the `cp env.sample .env` and edit it
+2. change the `APPROVED_API_KEY` key to something unique, it doesn't need to be uuidv4. there is no limit to the length not format, but i suggest no spaces nor line breaks
+3. You **MUST** provide the keys ( for now since it is a PoC ) as a mount in the `/keys` path or you can mount them in a different place byt setting the `WOSS_REMOTE_SIGNER_SERVER_ABS_KEYS_PATH` variable
+	1. in `keys` mounted volume 2 files are important `passphrase` and `private.key`
+4. Following is the `docker-compose.yml` file which will spin the signing repo
 
 ```yaml
 version: "3"
 services:
   server:
     image: woss/remote-signer-server
+		env_file: ./.env
     volumes:
       - ./keys:/keys
     ports:
       - 3000:3000
 ```
+
+The key, once retrieved is cached in the `~/.cache/remote-signer/FINGERPRINT.asc` and used later. If you didn't broadcast your public key ( i have no idea why you would do that ) then you can create a file with the armored content. 
+
 
 Expose the port as you see fit, it must be `3000` internally.
 
@@ -42,7 +51,7 @@ Expose the port as you see fit, it must be `3000` internally.
 Modify this to suits your need:
 
 ```
-sudo sh -c 'curl https://ipfs.anagolay.network/ipfs/bafybeigcptua5ztgeydvokh6tsz7noz2cvfd2boxfbolbdgdm7wsajcuom > /usr/local/bin/remote-signer && chmod +x /usr/local/bin/remote-signer'
+sudo sh -c 'curl https://ipfs.anagolay.network/ipfs/bafybeigcptua5ztgeydvokh6tsz7noz2cvfd2boxfbolbdgdm7wsajcuom > /usr/local/bin/remote_signer && chmod +x /usr/local/bin/remote_signer'
 ```
 
 ### Set the env variables
@@ -56,6 +65,9 @@ export GIT_REMOTE_SIGN_URL=https://your-service.com
 # only set this if you don't want to add the git.user.signingKey
 # variable or that somehow doesn't work
 export GPG_SIGN_KEY=YOUR_FULL_LENGTH_KEY_ID
+
+# be really careful where and how you store this. who ever has access to this can acceess your sever
+export APPROVED_API_KEY=777da2f3-19a5-425c-b662-79747d0b390c
 ```
 
 ### Change the gitconfig
@@ -73,10 +85,12 @@ Now when you all that, change the gitconfig to match this:
 [user]
 name = Daniel Maricic
 email = daniel@woss.io
-# signingKey = 7A6DB9962EF3978E # this is my main key, only last 16 chars
-signingKey = 3595E4B1EB3363FB7C4F78CC12F55F75B1EB0FA4 # this is my new full length testing key for p2p git signing
+# signingKey = 7A6DB9962EF3128E # this is my main key, only last 16 chars
+
+# this is my new full length testing key for p2p git signing, if this is not set GPG_SIGN_KEY will be used
+signingKey = 3595E4B1EB3363FB7C4F78CC12F55F7513EB0FA4 
 [gpg]
-program = remote-signer
+program = remote_signer
 [tag]
 forceSignAnnotated = true
 [commit]
@@ -89,7 +103,7 @@ There is a log file generated in the `~/.logs/remote-signer/git-signer.log` whic
 tail -f ~/.logs/remote-signer/git-signer.log
 ```
 
-you can test the `remote-signer` bu executing it and writing something in the `stdio` then CTRL+C or CTRL+D to stop it.
+you can test the `remote_signer` bu executing it then checking the logs where you will see error message 😉
 
 ```sh
 git add your-file
